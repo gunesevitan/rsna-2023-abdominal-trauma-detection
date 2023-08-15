@@ -19,7 +19,7 @@ def get_classification_transforms(**transform_parameters):
         Transforms for training, validation and test sets
     """
 
-    train_transforms = A.Compose([
+    training_transforms = A.Compose([
         A.Resize(
             height=transform_parameters['resize_height'],
             width=transform_parameters['resize_width'],
@@ -36,7 +36,7 @@ def get_classification_transforms(**transform_parameters):
         ToTensorV2(always_apply=True)
     ])
 
-    val_transforms = A.Compose([
+    validation_transforms = A.Compose([
         A.Resize(
             height=transform_parameters['resize_height'],
             width=transform_parameters['resize_width'],
@@ -68,5 +68,5 @@ def get_classification_transforms(**transform_parameters):
         ToTensorV2(always_apply=True)
     ])
 
-    classification_transforms = {'train': train_transforms, 'val': val_transforms, 'test': test_transforms}
+    classification_transforms = {'training': training_transforms, 'validation': validation_transforms, 'test': test_transforms}
     return classification_transforms
