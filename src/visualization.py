@@ -458,6 +458,77 @@ def visualize_image(image_or_dicom, path=None):
         plt.close(fig)
 
 
+def visualize_learning_curve(training_losses, validation_losses, best_epoch, validation_scores=None, path=None):
+
+    """
+    Visualize learning curves of the models
+
+    Parameters
+    ----------
+    training_losses: list of shape (n_epochs)
+        List of training losses
+
+    validation_losses: list of shape (n_epochs)
+        List of validation losses
+
+    best_epoch: int or None
+        Epoch with the best validation loss
+
+    validation_scores: list of shape (n_scores, n_epochs)
+        List of multiple validation scores
+
+    path: str or None
+        Path of the output file (if path is None, plot is displayed with selected backend)
+    """
+
+    if validation_scores is not None:
+
+        fig, axes = plt.subplots(figsize=(18, 18), nrows=2, dpi=100)
+        axes[0].plot(np.arange(1, len(training_losses) + 1), training_losses, '-o', linewidth=2, label=f'training_loss (best: {training_losses[best_epoch]:.4f})')
+        axes[0].plot(np.arange(1, len(validation_losses) + 1), validation_losses, '-o', linewidth=2, label=f'validation_loss (best: {validation_losses[best_epoch]:.4f})')
+        axes[0].axvline(best_epoch + 1, color='r', label=f'Best Epoch: {best_epoch + 1}')
+
+        if validation_scores is not None:
+            for metric, scores in validation_scores.items():
+                axes[1].plot(np.arange(1, len(scores) + 1), scores, '-o', linewidth=2, label=f'{metric} (best: {scores[best_epoch]:.4f})')
+
+            axes[1].axvline(best_epoch + 1, color='r', label=f'Best Epoch: {best_epoch + 1}')
+
+        for i in range(2):
+            axes[i].set_xlabel('Epochs/Steps', size=15, labelpad=12.5)
+            axes[i].set_ylabel('Losses/Metrics', size=15, labelpad=12.5)
+            axes[i].set_xticks(np.arange(1, len(validation_losses) + 1), np.arange(1, len(validation_losses) + 1))
+
+            axes[i].tick_params(axis='x', labelsize=12.5, pad=10)
+            axes[i].tick_params(axis='y', labelsize=12.5, pad=10)
+            axes[i].legend(prop={'size': 18})
+
+        axes[0].set_title('Learning Curve (Losses)', size=20, pad=15)
+        axes[0].set_title('Learning Curve (Metrics)', size=20, pad=15)
+
+    else:
+        fig, ax = plt.subplots(figsize=(18, 8), dpi=100)
+        ax.plot(np.arange(1, len(training_losses) + 1), training_losses, '-o', linewidth=2, label=f'training_loss (best: {training_losses[best_epoch]:.4f})')
+        ax.plot(np.arange(1, len(validation_losses) + 1), validation_losses, '-o', linewidth=2, label=f'validation_loss (best: {validation_losses[best_epoch]:.4f})')
+        ax.axvline(best_epoch + 1, color='r', label=f'Best Epoch: {best_epoch + 1}')
+
+        ax.set_xlabel('Epochs/Steps', size=15, labelpad=12.5)
+        ax.set_ylabel('Losses/Metrics', size=15, labelpad=12.5)
+        ax.set_xticks(np.arange(1, len(validation_losses) + 1), np.arange(1, len(validation_losses) + 1))
+
+        ax.tick_params(axis='x', labelsize=12.5, pad=10)
+        ax.tick_params(axis='y', labelsize=12.5, pad=10)
+        ax.legend(prop={'size': 18})
+        ax.set_title('Learning Curve (Losses)', size=20, pad=15)
+
+    if path is None:
+        plt.show()
+    else:
+        plt.savefig(path)
+        plt.close(fig)
+
+
+
 if __name__ == '__main__':
 
     df_train = pd.read_csv(settings.DATA / 'rsna-2023-abdominal-trauma-detection' / 'train.csv')
