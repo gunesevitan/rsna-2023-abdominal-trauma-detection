@@ -30,7 +30,7 @@ def write_image(dicom_file_path, output_directory):
         image=image, dicom=dicom,
         bits_allocated='dataset', bits_stored='dataset',
         rescale_slope='dataset', rescale_intercept='dataset',
-        window_center=None, window_width=None,
+        window_center='dataset', window_width='dataset',
         photometric_interpretation='dataset', max_pixel_value=1
     )
     cv2.imwrite(str(output_directory / f'{dicom_file_path.split("/")[-1].split(".")[0]}.png'), image)

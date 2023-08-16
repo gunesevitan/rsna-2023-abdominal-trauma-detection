@@ -11,7 +11,8 @@ import settings
 
 if __name__ == '__main__':
 
-    image_paths = glob(str(settings.DATA / 'datasets' / 'images' / '*' / '*' / '*.png'))
+    dataset = '2d_bit_shifted_rescaled_windowed'
+    image_paths = glob(str(settings.DATA / 'datasets' / dataset / 'images' / '*' / '*' / '*.png'))
     pixel_count = 0
     pixel_sum = 0
     pixel_squared_sum = 0
@@ -34,7 +35,7 @@ if __name__ == '__main__':
         'mean': mean,
         'std': std
     }
-    with open(settings.DATA / 'datasets' / 'statistics.json', mode='w') as f:
+    with open(settings.DATA / 'datasets' / dataset / 'statistics.json', mode='w') as f:
         json.dump(dataset_statistics, f, indent=2)
 
     settings.logger.info(f'Dataset statistics are calculated with {len(image_paths)} images')
