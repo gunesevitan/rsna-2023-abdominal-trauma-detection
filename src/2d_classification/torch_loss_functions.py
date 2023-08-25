@@ -24,6 +24,28 @@ class SampleWeightedBCEWithLogitsLoss(_WeightedLoss):
         return loss
 
 
+class SampleWeightedBCELoss(_WeightedLoss):
+
+    def __init__(self, weight=None, reduction='mean'):
+
+        super(SampleWeightedBCELoss, self).__init__(weight=weight, reduction=reduction)
+
+        self.weight = weight
+        self.reduction = reduction
+
+    def forward(self, inputs, targets, sample_weights):
+
+        loss = F.binary_cross_entropy(inputs, targets, reduction='none', weight=self.weight)
+        loss = loss * sample_weights
+
+        if self.reduction == 'mean':
+            loss = loss.mean()
+        elif self.reduction == 'sum':
+            loss = loss.sum()
+
+        return loss
+
+
 class SampleWeightedCrossEntropyLoss(_WeightedLoss):
 
     def __init__(self, weight=None, reduction='mean'):
