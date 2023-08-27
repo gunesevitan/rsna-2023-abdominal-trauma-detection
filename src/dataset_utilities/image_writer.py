@@ -10,7 +10,7 @@ import settings
 import dicom_utilities
 
 
-def write_image(dicom_file_path, output_directory):
+def write_image(dicom_file_path, output_directory, normalize_pixel_spacing, new_pixel_spacing):
 
     """
     Read DICOM file and write it as a png file
@@ -22,6 +22,12 @@ def write_image(dicom_file_path, output_directory):
 
     output_directory: pathlib.Path
         Path of the directory image will be written to
+
+    normalize_pixel_spacing: bool
+        Whether to normalize pixel spacing or not
+
+    new_pixel_spacing: tuple
+        Dataset pixel spacing after normalization
     """
 
     dicom = pydicom.dcmread(str(dicom_file_path))
@@ -33,6 +39,10 @@ def write_image(dicom_file_path, output_directory):
         window_center='dataset', window_width='dataset',
         photometric_interpretation='dataset', max_pixel_value=1
     )
+
+    if normalize_pixel_spacing:
+        image = dicom_utilities.adjust_pixel_spacing(image=image, dicom=dicom, current_pixel_spacing='dataset', new_pixel_spacing=new_pixel_spacing)
+
     cv2.imwrite(str(output_directory / f'{dicom_file_path.split("/")[-1].split(".")[0]}.png'), image)
 
 
@@ -56,8 +66,8 @@ if __name__ == '__main__':
             scan_output_directory.mkdir(parents=True, exist_ok=True)
 
             Parallel(n_jobs=16)(
-                delayed(write_image)(dicom_file_path=str(scan_directory / file_name), output_directory=scan_output_directory)
+                delayed(write_image)(dicom_file_path=str(scan_directory / file_name), output_directory=scan_output_directory, normalize_pixel_spacing=True, new_pixel_spacing=(1.0, 1.0))
                 for file_name in tqdm(scan_dicom_files)
             )
 
-            settings.logger.info(f'Finished writing images {len(scan_dicom_files)} of patient {patient} scan {scan}')
+            settings.logger.info(f'Finished writing {len(scan_dicom_files)} images for patient {patient} scan {scan}')
