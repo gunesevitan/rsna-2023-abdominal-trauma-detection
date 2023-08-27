@@ -1,4 +1,5 @@
 import sys
+import argparse
 from glob import glob
 from tqdm import tqdm
 import numpy as np
@@ -11,8 +12,11 @@ import settings
 
 if __name__ == '__main__':
 
-    dataset = '2d_bit_shifted_rescaled_windowed'
-    image_paths = glob(str(settings.DATA / 'datasets' / dataset / 'images' / '*' / '*' / '*.png'))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('dataset', type=str)
+    args = parser.parse_args()
+
+    image_paths = glob(str(settings.DATA / 'datasets' / args.dataset / 'images' / '*' / '*' / '*.png'))
     metadata = []
 
     for image_path in tqdm(image_paths):
@@ -43,4 +47,4 @@ if __name__ == '__main__':
     df_metadata['scan_id'] = df_metadata['scan_id'].astype(np.int64)
     df_metadata['image_id'] = df_metadata['image_id'].astype(np.int64)
     df_metadata = df_metadata.sort_values(by=['patient_id', 'scan_id', 'image_id'], ascending=True).reset_index(drop=True)
-    df_metadata.to_parquet(settings.DATA / 'datasets' / dataset / 'metadata.parquet')
+    df_metadata.to_parquet(settings.DATA / 'datasets' / args.dataset / 'metadata.parquet')
