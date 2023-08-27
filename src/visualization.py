@@ -614,6 +614,17 @@ if __name__ == '__main__':
             path=settings.EDA / f'dicom_tags_{feature}_value_counts.png'
         )
 
+    # Visualize counts of geometric properties
+    for feature in [
+        'PatientPosition'
+    ]:
+        visualize_categorical_feature_distribution(
+            df=df_train_dicom_tags,
+            feature=feature,
+            title=f'{feature} Value Counts',
+            path=settings.EDA / f'dicom_tags_{feature}_value_counts.png'
+        )
+
     df_train_series_meta = pd.read_csv(settings.DATA / 'rsna-2023-abdominal-trauma-detection' / 'train_series_meta.csv')
     settings.logger.info(f'Train Series Meta Dataset Shape: {df_train_series_meta.shape} - Memory Usage: {df_train_series_meta.memory_usage().sum() / 1024 ** 2:.2f} MB')
 
