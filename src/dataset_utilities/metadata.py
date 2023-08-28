@@ -52,7 +52,7 @@ if __name__ == '__main__':
                 'image_path': path,
             })
 
-        elif path.split('.')[-1] == 'npy':
+        elif dataset_dimensions == '3d':
 
             volume = np.load(path)
 
