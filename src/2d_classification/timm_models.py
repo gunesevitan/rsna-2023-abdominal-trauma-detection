@@ -29,13 +29,13 @@ class ClassificationHead(nn.Module):
                 F.adaptive_max_pool2d(x, output_size=(1, 1)).view(x.size(0), -1)
             ], dim=-1)
 
-        bowel_head_output = self.bowel_head(x)
-        extravasation_head_output = self.extravasation_head(x)
-        kidney_head_output = self.kidney_head(x)
-        liver_head_output = self.liver_head(x)
-        spleen_head_output = self.spleen_head(x)
+        bowel_output = self.bowel_head(x)
+        extravasation_output = self.extravasation_head(x)
+        kidney_output = self.kidney_head(x)
+        liver_output = self.liver_head(x)
+        spleen_output = self.spleen_head(x)
 
-        return bowel_head_output, extravasation_head_output, kidney_head_output, liver_head_output, spleen_head_output
+        return bowel_output, extravasation_output, kidney_output, liver_output, spleen_output
 
 
 class TimmConvolutionalClassificationModel(nn.Module):
@@ -60,6 +60,6 @@ class TimmConvolutionalClassificationModel(nn.Module):
     def forward(self, x):
 
         x = self.backbone.forward_features(x)
-        bowel_head_output, extravasation_head_output, kidney_head_output, liver_head_output, spleen_head_output = self.head(x)
+        bowel_output, extravasation_output, kidney_output, liver_output, spleen_output = self.head(x)
 
-        return bowel_head_output, extravasation_head_output, kidney_head_output, liver_head_output, spleen_head_output
+        return bowel_output, extravasation_output, kidney_output, liver_output, spleen_output
