@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 
 
 def shift_bits(image, dicom, bits_allocated=None, bits_stored=None):
@@ -232,5 +233,45 @@ def adjust_pixel_values(
     image = (image - image.min()) / (image.max() - image.min())
     image = invert_pixel_values(image=image, dicom=dicom, photometric_interpretation=photometric_interpretation, max_pixel_value=max_pixel_value)
     image = (image * 255.0).astype(np.uint8)
+
+    return image
+
+
+def adjust_pixel_spacing(image, dicom, current_pixel_spacing=None, new_pixel_spacing=(1.0, 1.0)):
+
+    """
+    Adjust pixel values by shifting bits, windowing, rescaling and inverting
+
+    Parameters
+    ----------
+    image: numpy.ndarray of shape (height, width)
+        Image array
+
+    dicom: pydicom.dataset.FileDataset
+        DICOM dataset
+
+    current_pixel_spacing: tuple, str ('dataset') or None
+        Physical distance in the patient between the center of each pixel
+
+    new_pixel_spacing: tuple
+        Desired pixel spacing after resize operation
+
+    Returns
+    -------
+    image: numpy.ndarray of shape (height, width)
+        Image array with adjusted pixel spacing
+    """
+
+    if current_pixel_spacing == 'dataset':
+        try:
+            current_pixel_spacing = dicom.PixelSpacing
+        except AttributeError:
+            current_pixel_spacing = None
+
+    if current_pixel_spacing is not None:
+        resize_factor = np.array(current_pixel_spacing) / np.array(new_pixel_spacing)
+        rounded_shape = np.round(image.shape * resize_factor)
+        resize_factor = rounded_shape / image.shape
+        image = cv2.resize(image, dsize=None, fx=resize_factor[1], fy=resize_factor[0], interpolation=cv2.INTER_NEAREST)
 
     return image
