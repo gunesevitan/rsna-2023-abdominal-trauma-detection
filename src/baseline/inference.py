@@ -58,11 +58,11 @@ if __name__ == '__main__':
 
     df['liver_low_prediction'] *= 2
     df['liver_high_prediction'] *= 4
-    df = metrics.normalize_probabilities(df, columns=['kidney_healthy_prediction', 'kidney_low_prediction', 'kidney_high_prediction'])
+    df = metrics.normalize_probabilities(df, columns=['liver_healthy_prediction', 'liver_low_prediction', 'liver_high_prediction'])
 
     df['spleen_low_prediction'] *= 2
     df['spleen_high_prediction'] *= 4
-    df = metrics.normalize_probabilities(df, columns=['kidney_healthy_prediction', 'kidney_low_prediction', 'kidney_high_prediction'])
+    df = metrics.normalize_probabilities(df, columns=['spleen_healthy_prediction', 'spleen_low_prediction', 'spleen_high_prediction'])
 
     df['any_injury_prediction'] = (1 - df[[
         'bowel_healthy_prediction', 'extravasation_healthy_prediction',
