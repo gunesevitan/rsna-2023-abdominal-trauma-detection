@@ -31,7 +31,7 @@ if __name__ == '__main__':
         for label, column in enumerate([f'{multiclass_target}_healthy', f'{multiclass_target}_low', f'{multiclass_target}_high']):
             df.loc[df[column] == 1, multiclass_target] = label
 
-    binary_target_columns = ['bowel_injury', 'extravasation_injury', 'any_injury']
+    binary_target_columns = ['bowel_injury', 'extravasation_injury']
     for column in binary_target_columns:
         df[f'{column}_prediction'] = df[column].mean()
 
@@ -44,10 +44,35 @@ if __name__ == '__main__':
         for column in column_group:
             df[f'{column}_prediction'] = df[column].mean()
 
+    df['bowel_healthy_prediction'] = 1 - df['bowel_injury_prediction']
+    df['bowel_injury_prediction'] *= 2
+    df = metrics.normalize_probabilities(df, columns=['bowel_healthy_prediction', 'bowel_injury_prediction'])
+
+    df['extravasation_healthy_prediction'] = 1 - df['extravasation_injury_prediction']
+    df['extravasation_injury_prediction'] *= 14
+    df = metrics.normalize_probabilities(df, columns=['extravasation_healthy_prediction', 'extravasation_injury_prediction'])
+
+    df['kidney_low_prediction'] *= 2
+    df['kidney_high_prediction'] *= 4
+    df = metrics.normalize_probabilities(df, columns=['kidney_healthy_prediction', 'kidney_low_prediction', 'kidney_high_prediction'])
+
+    df['liver_low_prediction'] *= 2
+    df['liver_high_prediction'] *= 4
+    df = metrics.normalize_probabilities(df, columns=['kidney_healthy_prediction', 'kidney_low_prediction', 'kidney_high_prediction'])
+
+    df['spleen_low_prediction'] *= 2
+    df['spleen_high_prediction'] *= 4
+    df = metrics.normalize_probabilities(df, columns=['kidney_healthy_prediction', 'kidney_low_prediction', 'kidney_high_prediction'])
+
+    df['any_injury_prediction'] = (1 - df[[
+        'bowel_healthy_prediction', 'extravasation_healthy_prediction',
+        'kidney_healthy_prediction', 'liver_healthy_prediction', 'spleen_healthy_prediction'
+    ]]).max(axis=1)
+
     scores = {}
     df = metrics.create_sample_weights(df=df)
 
-    for column in binary_target_columns:
+    for column in binary_target_columns + ['any_injury']:
         target_scores = metrics.binary_classification_scores(
             y_true=df[column],
             y_pred=df[f'{column}_prediction'],
