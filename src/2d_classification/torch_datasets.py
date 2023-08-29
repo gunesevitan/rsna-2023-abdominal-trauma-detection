@@ -47,10 +47,11 @@ class ClassificationDataset(Dataset):
 
         Returns
         -------
-        image: torch.FloatTensor of shape (channel, height, width) or numpy.ndarray of shape (height, width, channel)
-            Image tensor or array
+        image: torch.FloatTensor of shape (channel, height, width)
+            Image tensor
 
-        target: torch
+        targets: torch.Tensor
+            Target tensor
         """
 
         image_paths = self.image_paths[idx]
