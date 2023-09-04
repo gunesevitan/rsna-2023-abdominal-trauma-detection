@@ -36,7 +36,7 @@ def write_image(dicom_file_path, output_directory, normalize_pixel_spacing, new_
         image=image, dicom=dicom,
         bits_allocated='dataset', bits_stored='dataset',
         rescale_slope='dataset', rescale_intercept='dataset',
-        window_center=None, window_width=None,
+        window_centers=['dataset', 50, 60], window_widths=['dataset', 350, 160],
         photometric_interpretation='dataset', max_pixel_value=1
     )
 
@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     train_directory = settings.DATA / 'rsna-2023-abdominal-trauma-detection' / 'train_images'
     train_patients = sorted(os.listdir(train_directory), key=lambda filename: int(filename))
-    output_directory = settings.DATA / 'datasets' / 'images'
+    output_directory = settings.DATA / 'datasets' / '2d_windowed' / 'images'
     output_directory.mkdir(parents=True, exist_ok=True)
 
     for patient in tqdm(train_patients):
