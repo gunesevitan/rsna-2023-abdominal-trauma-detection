@@ -1,5 +1,4 @@
 import sys
-import numpy as np
 import torch
 
 sys.path.append('..')
