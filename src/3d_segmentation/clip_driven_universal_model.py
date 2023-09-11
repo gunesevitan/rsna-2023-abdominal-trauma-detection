@@ -1,4 +1,6 @@
 import sys
+from itertools import groupby
+import numpy as np
 import torch
 
 sys.path.append('..')
@@ -78,7 +80,7 @@ def predict_clip_driven_universal_model(inputs, model, device, amp=False, thresh
     Parameters
     ----------
     inputs: torch.Tensor of shape (batch, channel, depth, height, width)
-        Name of the model directory
+        Inputs tensor
 
     model: torch.nn.Module
         CLIP-Driven Universal Model
@@ -113,3 +115,123 @@ def predict_clip_driven_universal_model(inputs, model, device, amp=False, thresh
     outputs = torch.squeeze(outputs.cpu(), dim=0).numpy()
 
     return outputs
+
+
+def post_process_predictions(predictions, threshold):
+
+    """
+    Post process given predictions
+
+    Parameters
+    ----------
+    predictions: numpy.ndarray of shape (channel, depth, height, width)
+        Array of predictions
+
+    threshold: float
+        Threshold for converting soft predictions into hard labels
+
+    Returns
+    -------
+    outputs: numpy.ndarray of shape (channel, depth, height, width)
+        Array of processed predictions
+    """
+
+    predictions = (predictions >= threshold).astype(bool)
+
+    spleen_predictions = predictions[0]
+    kidney_predictions = np.any(predictions[[1, 2]] >= 0.5, axis=0)
+    liver_predictions = predictions[5]
+    bowel_predictions = np.any(predictions[[17, 18, 19]] >= 0.5, axis=0)
+
+    kidney_tumor_predictions = np.any(predictions[[25, 31]] >= 0.5, axis=0)
+    liver_tumor_predictions = predictions[26]
+    colon_tumor_predictions = predictions[30]
+
+    predictions = np.stack([
+        spleen_predictions, kidney_predictions, liver_predictions, bowel_predictions,
+        kidney_tumor_predictions, liver_tumor_predictions, colon_tumor_predictions
+    ], axis=0)
+
+    return predictions
+
+
+def find_rois(predictions):
+
+    """
+    Find ROIs on given predictions
+
+    Parameters
+    ----------
+    predictions: numpy.ndarray of shape (channel, depth, height, width)
+        Array of predictions
+
+    Returns
+    -------
+    rois: dict
+        Dictionary of normalized ROI coordinates
+    """
+
+    spatial_dimensions = predictions.shape[1:]
+    classes = [
+        'spleen', 'kidney', 'liver', 'bowel',
+        'kidney_tumor', 'liver_tumor', 'colon_tumor'
+    ]
+
+    rois = {}
+
+    for i, c in enumerate(classes):
+
+        class_predictions_axial_sum = predictions[i].sum(axis=(1, 2))
+        class_predictions_coronal_sum = predictions[i].sum(axis=(0, 2))
+        class_predictions_sagittal_sum = predictions[i].sum(axis=(0, 1))
+
+        axial_non_zero_sequences = groupby(class_predictions_axial_sum, key=lambda x: x > 0.0)
+        coronal_non_zero_sequences = groupby(class_predictions_coronal_sum, key=lambda x: x > 0.0)
+        sagittal_non_zero_sequences = groupby(class_predictions_sagittal_sum, key=lambda x: x > 0.0)
+
+        try:
+            axial_longest_non_zero_sequence = np.array(max([list(sequence) for gt_zero, sequence in axial_non_zero_sequences if gt_zero], key=len))
+            axial_longest_non_zero_sequence_idx = np.where(np.isin(class_predictions_axial_sum, axial_longest_non_zero_sequence))[0]
+            axial_roi_start = float(axial_longest_non_zero_sequence_idx.min() / spatial_dimensions[0])
+            axial_roi_end = float(axial_longest_non_zero_sequence_idx.max() / spatial_dimensions[0])
+            axial_roi_area = int(axial_longest_non_zero_sequence_idx.shape[0] / spatial_dimensions[0])
+        except ValueError:
+            axial_roi_start = None
+            axial_roi_end = None
+            axial_roi_area = None
+
+        try:
+            coronal_longest_non_zero_sequence = np.array(max([list(sequence) for gt_zero, sequence in coronal_non_zero_sequences if gt_zero], key=len))
+            coronal_longest_non_zero_sequence_idx = np.where(np.isin(class_predictions_coronal_sum, coronal_longest_non_zero_sequence))[0]
+            coronal_roi_start = float(coronal_longest_non_zero_sequence_idx.min() / spatial_dimensions[0])
+            coronal_roi_end = float(coronal_longest_non_zero_sequence_idx.max() / spatial_dimensions[0])
+            coronal_roi_area = int(coronal_longest_non_zero_sequence_idx.shape[0] / spatial_dimensions[0])
+        except ValueError:
+            coronal_roi_start = None
+            coronal_roi_end = None
+            coronal_roi_area = None
+
+        try:
+            sagittal_longest_non_zero_sequence = np.array(max([list(sequence) for gt_zero, sequence in sagittal_non_zero_sequences if gt_zero], key=len))
+            sagittal_longest_non_zero_sequence_idx = np.where(np.isin(class_predictions_sagittal_sum, sagittal_longest_non_zero_sequence))[0]
+            sagittal_roi_start = float(sagittal_longest_non_zero_sequence_idx.min() / spatial_dimensions[0])
+            sagittal_roi_end = float(sagittal_longest_non_zero_sequence_idx.max() / spatial_dimensions[0])
+            sagittal_roi_area = int(sagittal_longest_non_zero_sequence_idx.shape[0] / spatial_dimensions[0])
+        except ValueError:
+            sagittal_roi_start = None
+            sagittal_roi_end = None
+            sagittal_roi_area = None
+
+        rois[c] = {
+            'axial_roi_start': axial_roi_start,
+            'axial_roi_end': axial_roi_end,
+            'axial_roi_area': axial_roi_area,
+            'coronal_roi_start': coronal_roi_start,
+            'coronal_roi_end': coronal_roi_end,
+            'coronal_roi_area': coronal_roi_area,
+            'sagittal_roi_start': sagittal_roi_start,
+            'sagittal_roi_end': sagittal_roi_end,
+            'sagittal_roi_area': sagittal_roi_area
+        }
+
+    return rois
