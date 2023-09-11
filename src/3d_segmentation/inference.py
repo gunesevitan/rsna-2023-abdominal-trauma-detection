@@ -13,11 +13,13 @@ import torch_transforms
 sys.path.append('..')
 import settings
 import dicom_utilities
+import visualization
 
 
 if __name__ == '__main__':
 
-    config = yaml.load(open(settings.MODELS / 'clip_driven_universal_model' / 'config.yaml', 'r'), Loader=yaml.FullLoader)
+    model_directory = settings.MODELS / 'clip_driven_universal_model'
+    config = yaml.load(open(model_directory / 'config.yaml', 'r'), Loader=yaml.FullLoader)
     settings.logger.info(f'Running CLIP Driven Universal Model for inference')
 
     image_dataset_directory = settings.DATA / 'rsna-2023-abdominal-trauma-detection' / 'train_images'
@@ -90,4 +92,17 @@ if __name__ == '__main__':
             df_scan_rois.append(df_rois)
 
     df_scan_rois = pd.concat(df_scan_rois, axis=0, ignore_index=True)
-    df_scan_rois.to_csv(settings.MODELS / 'clip_driven_universal_model' / 'rois.csv', index=False)
+    df_scan_rois.to_csv(model_directory / 'rois.csv', index=False)
+
+    visualization_directory = model_directory / 'rois'
+    visualization_directory.mkdir(parents=True, exist_ok=True)
+    roi_columns = [column for column in df_scan_rois.columns if column not in ['patient_id', 'scan_id']]
+    df_scan_rois[roi_columns] = df_scan_rois[roi_columns].astype(np.float32)
+
+    for column in tqdm(roi_columns):
+        visualization.visualize_continuous_feature_distribution(
+            df=df_scan_rois,
+            feature=column,
+            title=f'{column} Histogram',
+            path=visualization_directory / f'{column}_histogram.png'
+        )
