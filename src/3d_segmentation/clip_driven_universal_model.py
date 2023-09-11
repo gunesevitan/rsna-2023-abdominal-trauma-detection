@@ -8,11 +8,7 @@ import settings
 
 sys.path.append('../../venv/lib/python3.11/site-packages/CLIP-Driven-Universal-Model')
 from model.Universal_model import Universal_model
-from utils.utils import (
-    organ_post_process, extract_topk_largest_candidates, PSVein_post_process,
-    lung_post_process, merge_and_top_organ, organ_region_filter_out, threshold_organ,
-    TUMOR_ORGAN, ORGAN_NAME, TEMPLATE
-)
+from utils.utils import threshold_organ
 
 
 CLASS_NAMES = [
@@ -203,9 +199,9 @@ def find_rois(predictions):
         try:
             coronal_longest_non_zero_sequence = np.array(max([list(sequence) for gt_zero, sequence in coronal_non_zero_sequences if gt_zero], key=len))
             coronal_longest_non_zero_sequence_idx = np.where(np.isin(class_predictions_coronal_sum, coronal_longest_non_zero_sequence))[0]
-            coronal_roi_start = float(coronal_longest_non_zero_sequence_idx.min() / spatial_dimensions[0])
-            coronal_roi_end = float(coronal_longest_non_zero_sequence_idx.max() / spatial_dimensions[0])
-            coronal_roi_area = int(coronal_longest_non_zero_sequence_idx.shape[0] / spatial_dimensions[0])
+            coronal_roi_start = float(coronal_longest_non_zero_sequence_idx.min() / spatial_dimensions[1])
+            coronal_roi_end = float(coronal_longest_non_zero_sequence_idx.max() / spatial_dimensions[1])
+            coronal_roi_area = int(coronal_longest_non_zero_sequence_idx.shape[0] / spatial_dimensions[1])
         except ValueError:
             coronal_roi_start = None
             coronal_roi_end = None
@@ -214,9 +210,9 @@ def find_rois(predictions):
         try:
             sagittal_longest_non_zero_sequence = np.array(max([list(sequence) for gt_zero, sequence in sagittal_non_zero_sequences if gt_zero], key=len))
             sagittal_longest_non_zero_sequence_idx = np.where(np.isin(class_predictions_sagittal_sum, sagittal_longest_non_zero_sequence))[0]
-            sagittal_roi_start = float(sagittal_longest_non_zero_sequence_idx.min() / spatial_dimensions[0])
-            sagittal_roi_end = float(sagittal_longest_non_zero_sequence_idx.max() / spatial_dimensions[0])
-            sagittal_roi_area = int(sagittal_longest_non_zero_sequence_idx.shape[0] / spatial_dimensions[0])
+            sagittal_roi_start = float(sagittal_longest_non_zero_sequence_idx.min() / spatial_dimensions[2])
+            sagittal_roi_end = float(sagittal_longest_non_zero_sequence_idx.max() / spatial_dimensions[2])
+            sagittal_roi_area = int(sagittal_longest_non_zero_sequence_idx.shape[0] / spatial_dimensions[2])
         except ValueError:
             sagittal_roi_start = None
             sagittal_roi_end = None
