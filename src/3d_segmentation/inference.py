@@ -8,7 +8,7 @@ import pydicom
 import torch
 
 import clip_driven_universal_model
-import torch_transforms
+import transforms
 
 sys.path.append('..')
 import settings
@@ -66,11 +66,11 @@ if __name__ == '__main__':
             scan = np.array(scan)
             z_spacing = df_scan['z_position_diff'].abs().value_counts().index[0]
             spacing_factor = (np.round(1.5 / z_spacing, 3), 1.0, 1.0)
-            transforms = torch_transforms.get_clip_driven_universal_model_transforms(**{
+            inference_transforms = transforms.get_clip_driven_universal_model_transforms(**{
                 'spacing_pixdim': spacing_factor,
                 'spatial_size': config['dataset']['spatial_size']
             })['inference']
-            inputs = torch.unsqueeze(transforms(scan), dim=0) / 255.
+            inputs = torch.unsqueeze(inference_transforms(scan), dim=0) / 255.
 
             predictions = clip_driven_universal_model.predict_clip_driven_universal_model(
                 inputs=inputs,
