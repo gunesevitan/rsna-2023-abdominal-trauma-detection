@@ -36,7 +36,7 @@ def write_image(dicom_file_path, output_directory, normalize_pixel_spacing, new_
         image=image, dicom=dicom,
         bits_allocated='dataset', bits_stored='dataset',
         rescale_slope='dataset', rescale_intercept='dataset',
-        window_centers=['dataset', 50, 60], window_widths=['dataset', 350, 160],
+        window_centers=['dataset'], window_widths=['dataset'],
         photometric_interpretation='dataset', max_pixel_value=1
     )
 
