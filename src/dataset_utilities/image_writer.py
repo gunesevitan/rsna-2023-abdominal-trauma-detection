@@ -49,9 +49,10 @@ def write_image(dicom_file_path, output_directory, normalize_pixel_spacing, new_
 if __name__ == '__main__':
 
     train_directory = settings.DATA / 'rsna-2023-abdominal-trauma-detection' / 'train_images'
-    train_patients = sorted(os.listdir(train_directory), key=lambda filename: int(filename))
-    output_directory = settings.DATA / 'datasets' / '2d_windowed' / 'images'
+    output_directory = settings.DATA / 'datasets' / '2d_windowed_400w_50c_1mm_isotropic' / 'images'
     output_directory.mkdir(parents=True, exist_ok=True)
+
+    train_patients = sorted(os.listdir(train_directory), key=lambda filename: int(filename))
 
     for patient in tqdm(train_patients):
 
@@ -66,7 +67,12 @@ if __name__ == '__main__':
             scan_output_directory.mkdir(parents=True, exist_ok=True)
 
             Parallel(n_jobs=16)(
-                delayed(write_image)(dicom_file_path=str(scan_directory / file_name), output_directory=scan_output_directory, normalize_pixel_spacing=True, new_pixel_spacing=(1.0, 1.0))
+                delayed(write_image)(
+                    dicom_file_path=str(scan_directory / file_name),
+                    output_directory=scan_output_directory,
+                    normalize_pixel_spacing=True,
+                    new_pixel_spacing=(1.0, 1.0)
+                )
                 for file_name in tqdm(scan_dicom_files)
             )
 
