@@ -56,7 +56,7 @@ if __name__ == '__main__':
                 window_centers=[50], window_widths=[400],
                 photometric_interpretation='dataset', max_pixel_value=1
             )
-            image = dicom_utilities.adjust_pixel_spacing(image=image, dicom=dicom, current_pixel_spacing='dataset', new_pixel_spacing=(1.5, 1.5))
+            image = dicom_utilities.adjust_pixel_spacing(image=image, dicom=dicom, current_pixel_spacing='dataset', new_pixel_spacing=(1.0, 1.0))
             images.append(image)
 
         images = np.stack(images)
