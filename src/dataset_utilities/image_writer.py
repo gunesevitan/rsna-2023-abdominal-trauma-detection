@@ -48,15 +48,15 @@ def write_image(dicom_file_path, output_directory, normalize_pixel_spacing, new_
 
 if __name__ == '__main__':
 
-    train_directory = settings.DATA / 'rsna-2023-abdominal-trauma-detection' / 'train_images'
+    dicom_dataset_directory = settings.DATA / 'rsna-2023-abdominal-trauma-detection' / 'train_images'
+    patient_ids = sorted(os.listdir(dicom_dataset_directory), key=lambda filename: int(filename))
+
     output_directory = settings.DATA / 'datasets' / '2d_windowed_400w_50c_1mm_isotropic' / 'images'
     output_directory.mkdir(parents=True, exist_ok=True)
 
-    train_patients = sorted(os.listdir(train_directory), key=lambda filename: int(filename))
+    for patient in tqdm(patient_ids):
 
-    for patient in tqdm(train_patients):
-
-        patient_directory = train_directory / patient
+        patient_directory = dicom_dataset_directory / patient
         patient_scans = sorted(os.listdir(patient_directory), key=lambda filename: int(filename))
 
         for scan in tqdm(patient_scans):
