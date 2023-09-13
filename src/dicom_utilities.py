@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import pydicom
 
 
 def shift_bits(image, dicom, bits_allocated=None, bits_stored=None):
@@ -182,7 +183,7 @@ def adjust_pixel_values(
         image, dicom,
         bits_allocated=None, bits_stored=None,
         rescale_slope=None, rescale_intercept=None,
-        window_center=None, window_width=None,
+        window_centers=None, window_widths=None,
         photometric_interpretation=None, max_pixel_value=255
 ):
 
@@ -209,11 +210,11 @@ def adjust_pixel_values(
     rescale_intercept: int, str ('dataset') or None
         Rescale intercept for rescaling pixel values
 
-    window_center: int, str ('dataset') or None
-        Window center for windowing pixel values
+    window_centers: list of int, str ('dataset') or None
+        List of window center values for windowing pixel values
 
-    window_width: int, str ('dataset') or None
-        Window width for windowing pixel values
+    window_widths: list of int, str ('dataset') or None
+        List of window width values for windowing pixel values
 
     photometric_interpretation: str or None
         Interpretation of the pixel data
@@ -229,7 +230,12 @@ def adjust_pixel_values(
 
     image = shift_bits(image=image, dicom=dicom, bits_allocated=bits_allocated, bits_stored=bits_stored)
     image = rescale_pixel_values(image=image, dicom=dicom, rescale_slope=rescale_slope, rescale_intercept=rescale_intercept)
-    image = window_pixel_values(image=image, dicom=dicom, window_center=window_center, window_width=window_width)
+
+    image = np.stack([
+        window_pixel_values(image=image, dicom=dicom, window_center=window_center, window_width=window_width)
+        for window_center, window_width in zip(window_centers, window_widths)
+    ], axis=-1)
+
     image = (image - image.min()) / (image.max() - image.min())
     image = invert_pixel_values(image=image, dicom=dicom, photometric_interpretation=photometric_interpretation, max_pixel_value=max_pixel_value)
     image = (image * 255.0).astype(np.uint8)
@@ -270,8 +276,8 @@ def adjust_pixel_spacing(image, dicom, current_pixel_spacing=None, new_pixel_spa
 
     if current_pixel_spacing is not None:
         resize_factor = np.array(current_pixel_spacing) / np.array(new_pixel_spacing)
-        rounded_shape = np.round(image.shape * resize_factor)
-        resize_factor = rounded_shape / image.shape
+        rounded_shape = np.round(image.shape[:2] * resize_factor)
+        resize_factor = rounded_shape / image.shape[:2]
         image = cv2.resize(image, dsize=None, fx=resize_factor[1], fy=resize_factor[0], interpolation=cv2.INTER_NEAREST)
 
     return image
