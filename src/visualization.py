@@ -499,6 +499,7 @@ def visualize_annotations(image_or_dicom, masks=None, bounding_boxes=None, label
 
     if bounding_boxes is not None and labels is not None:
         for bounding_box, label in zip(bounding_boxes, labels):
+            bounding_box = annotation_utilities.coco_to_voc_bounding_box(bounding_box)
             # Draw bounding box and its label to the image
             image = cv2.rectangle(image, (bounding_box[0], bounding_box[1]), (bounding_box[2], bounding_box[3]), (36, 255, 12), 2)
             (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
