@@ -1,11 +1,15 @@
+from tqdm import tqdm
 import numpy as np
 import pandas as pd
+import cv2
 import pydicom
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import seaborn as sns
 from sklearn.metrics import auc
 
 import settings
+import annotation_utilities
 
 
 def visualize_categorical_feature_distribution(df, feature, title, path=None):
@@ -412,15 +416,18 @@ def visualize_predictions(y_true, y_pred, title, path=None):
         plt.close(fig)
 
 
-def visualize_image(image_or_dicom, path=None):
+def visualize_image(image_or_dicom, mask=None, path=None):
 
     """
-    Visualize given image
+    Visualize given image with or without its mask
 
     Parameters
     ----------
-    image_or_dicom: numpy.ndarray of shape (height, width, 3) or pydicom.dataset.FileDataset
+    image_or_dicom: numpy.ndarray of shape (height, width, channel) or pydicom.dataset.FileDataset
         Image array or DICOM
+
+    mask: np.ndarray of shape (height, width) or None
+        Mask array
 
     path: str or None
         Path of the output file or None (if path is None, plot is displayed with selected backend)
@@ -435,6 +442,8 @@ def visualize_image(image_or_dicom, path=None):
 
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.imshow(image, cmap='gray')
+    if mask is not None:
+        ax.imshow(mask, alpha=0.25)
     ax.set_xlabel('')
     ax.set_ylabel('')
     ax.tick_params(axis='x', labelsize=15, pad=10)
@@ -456,6 +465,104 @@ def visualize_image(image_or_dicom, path=None):
     else:
         plt.savefig(path)
         plt.close(fig)
+
+
+def visualize_annotations(image_or_dicom, masks=None, bounding_boxes=None, labels=None, path=None):
+
+    """
+    Visualize given image with or without its masks, bounding boxes and labels
+
+    Parameters
+    ----------
+    image_or_dicom: numpy.ndarray of shape (height, width, channel) or pydicom.dataset.FileDataset
+        Image array or DICOM
+
+    masks: numpy.ndarray of shape (n_annotations, height, width) or None
+        Array of masks
+
+    bounding_boxes: numpy.ndarray of shape (n_annotations, 4) or None
+        Array of bounding boxes
+
+    labels: numpy.ndarray of shape (n_annotations) or None
+        Array of labels
+
+    path: path-like str or None
+        Path of the output file or None (if path is None, plot is displayed with selected backend)
+    """
+
+    if isinstance(image_or_dicom, pydicom.dataset.FileDataset):
+        image = image_or_dicom.pixel_array
+    elif isinstance(image_or_dicom, np.ndarray):
+        image = image_or_dicom.copy()
+    else:
+        raise TypeError(f'Invalid image type {type(image_or_dicom)}')
+
+    if bounding_boxes is not None and labels is not None:
+        for bounding_box, label in zip(bounding_boxes, labels):
+            # Draw bounding box and its label to the image
+            image = cv2.rectangle(image, (bounding_box[0], bounding_box[1]), (bounding_box[2], bounding_box[3]), (36, 255, 12), 2)
+            (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
+            image = cv2.rectangle(image, (bounding_box[0], bounding_box[1] - 20), (bounding_box[0] + w, bounding_box[1]), (36, 255, 12), -1)
+            image = cv2.putText(image, label, (bounding_box[0], bounding_box[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.imshow(image, cmap='gray')
+
+    if masks is not None:
+        mask = annotation_utilities.binary_to_multi_object_mask(binary_masks=masks)
+        ax.imshow(mask, alpha=0.25)
+
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    ax.tick_params(axis='x', labelsize=15, pad=10)
+    ax.tick_params(axis='y', labelsize=15, pad=10)
+    ax.set_title('Image and Annotations', size=20, pad=15)
+
+    if path is None:
+        plt.show()
+    else:
+        plt.savefig(path)
+        plt.close(fig)
+
+
+def visualize_images(images_or_dicoms, masks=None, path=None):
+
+    """
+    Visualize given images with or without its masks
+
+    Parameters
+    ----------
+    images_or_dicoms: numpy.ndarray of shape (depth, height, width, channel) or list of pydicom.dataset.FileDataset
+        Image array or list of DICOMs
+
+    masks: np.ndarray of shape (depth, height, width) or None
+        Mask array
+
+    path: str or None
+        Path of the output file or None (if path is None, plot is displayed with selected backend)
+    """
+
+    if isinstance(images_or_dicoms[0], pydicom.dataset.FileDataset):
+        images = [dicom.pixel_array for dicom in images_or_dicoms]
+    elif isinstance(images_or_dicoms, np.ndarray):
+        images = images_or_dicoms.copy()
+    else:
+        raise TypeError(f'Invalid scan type {type(images_or_dicoms[0])}')
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    frames = []
+    if masks is not None:
+        for image, mask in zip(images, masks):
+            frames.append([
+                ax.imshow(image, cmap='gray', animated=True),
+                ax.imshow(mask, alpha=0.25, animated=True)
+            ])
+    else:
+        for image in images:
+            frames.append([ax.imshow(image, cmap='gray', animated=True)])
+
+    video = animation.ArtistAnimation(fig, frames, interval=50, blit=True, repeat_delay=1000)
+    video.save(path)
 
 
 def visualize_learning_curve(training_losses, validation_losses, best_epoch, validation_scores=None, path=None):
@@ -528,7 +635,6 @@ def visualize_learning_curve(training_losses, validation_losses, best_epoch, val
         plt.close(fig)
 
 
-
 if __name__ == '__main__':
 
     df_train = pd.read_csv(settings.DATA / 'rsna-2023-abdominal-trauma-detection' / 'train.csv')
@@ -557,13 +663,34 @@ if __name__ == '__main__':
         path=settings.EDA / 'target_columns_correlations.png'
     )
 
-    df_train_dicom_tags = pd.read_parquet(settings.DATA / 'rsna-2023-abdominal-trauma-detection' / 'train_dicom_tags.parquet')
-    settings.logger.info(f'Train DICOM Tags Dataset Shape: {df_train_dicom_tags.shape} - Memory Usage: {df_train_dicom_tags.memory_usage().sum() / 1024 ** 2:.2f} MB')
+    dataset_2d = '2d_bit_shifted_rescaled_spacing_normalized'
+    df_train_metadata = pd.read_parquet(settings.DATA / 'datasets' / dataset_2d / 'metadata.parquet')
+    settings.logger.info(f'Train Metadata Dataset Shape: {df_train_metadata.shape} - Memory Usage: {df_train_metadata.memory_usage().sum() / 1024 ** 2:.2f} MB')
 
-    # Create scan_id and patient_id features and visualize scan counts of patients
-    df_train_dicom_tags['scan_id'] = df_train_dicom_tags['path'].apply(lambda x: str(x).split('/')[2])
-    df_train_dicom_tags['patient_id'] = df_train_dicom_tags['path'].apply(lambda x: str(x).split('/')[1])
-    df_patient_scan_counts = pd.DataFrame(df_train_dicom_tags.groupby('patient_id')['scan_id'].nunique())
+    # Visualize binary and multi-class target columns
+    metadata_columns = ['image_height', 'image_width', 'image_mean', 'image_std']
+    for column in metadata_columns:
+        visualize_continuous_feature_distribution(
+            df=df_train_metadata,
+            feature=column,
+            title=f'{column} Histogram',
+            path=settings.EDA / f'metadata_{column}_histogram.png'
+        )
+
+    df_dicom_tags = pd.read_parquet(settings.DATA / 'rsna-2023-abdominal-trauma-detection' / 'train_dicom_tags.parquet')
+    settings.logger.info(f'DICOM Tags Dataset Shape: {df_dicom_tags.shape} - Memory Usage: {df_dicom_tags.memory_usage().sum() / 1024 ** 2:.2f} MB')
+
+    df_dicom_tags['scan_id'] = df_dicom_tags['path'].apply(lambda x: str(x).split('/')[2]).astype(np.uint64)
+    df_dicom_tags['patient_id'] = df_dicom_tags['path'].apply(lambda x: str(x).split('/')[1]).astype(np.uint64)
+    df_dicom_tags['slice_id'] = df_dicom_tags['path'].apply(lambda x: str(x).split('/')[3].split('.')[0]).astype(np.uint64)
+    df_dicom_tags['z_position'] = df_dicom_tags['ImagePositionPatient'].apply(lambda x: eval(x)[-1]).astype(np.float32)
+    df_dicom_tags.sort_values(by=['patient_id', 'scan_id', 'z_position'], ascending=[True, True, False], inplace=True)
+    df_dicom_tags.reset_index(drop=True, inplace=True)
+    df_dicom_tags['z_position_diff'] = df_dicom_tags.groupby(['patient_id', 'scan_id'])['z_position'].diff().round(2)
+    df_dicom_tags['slice_id_diff'] = df_dicom_tags.groupby(['patient_id', 'scan_id'])[['slice_id']].diff()
+    df_dicom_tags['image_path'] = df_dicom_tags['path'].apply(lambda x: str(image_dataset_directory) + x.split('images')[-1].split('.')[0] + '.png')
+
+    df_patient_scan_counts = pd.DataFrame(df_dicom_tags.groupby('patient_id')['scan_id'].nunique())
     visualize_categorical_feature_distribution(
         df=df_patient_scan_counts,
         feature='scan_id',
@@ -572,21 +699,21 @@ if __name__ == '__main__':
     )
 
     # Create slices feature and visualize counts of scan dimensions
-    df_train_dicom_tags['slices'] = df_train_dicom_tags.groupby(['patient_id', 'scan_id'])['scan_id'].transform('count')
+    df_dicom_tags['slices'] = df_dicom_tags.groupby(['patient_id', 'scan_id'])['scan_id'].transform('count')
     visualize_continuous_feature_distribution(
-        df=df_train_dicom_tags.groupby('scan_id')[['slices']].first(),
+        df=df_dicom_tags.groupby('scan_id')[['slices']].first(),
         feature='slices',
         title='Scan Slices Histogram',
         path=settings.EDA / f'dicom_tags_scan_slices_histogram.png'
     )
     visualize_continuous_feature_distribution(
-        df=df_train_dicom_tags.groupby('scan_id')[['Rows']].first(),
+        df=df_dicom_tags.groupby('scan_id')[['Rows']].first(),
         feature='Rows',
         title='Scan Heights Histogram',
         path=settings.EDA / f'dicom_tags_scan_heights_histogram.png'
     )
     visualize_continuous_feature_distribution(
-        df=df_train_dicom_tags.groupby('scan_id')[['Columns']].first(),
+        df=df_dicom_tags.groupby('scan_id')[['Columns']].first(),
         feature='Columns',
         title='Scan Widths Histogram',
         path=settings.EDA / f'dicom_tags_scan_widths_histogram.png'
@@ -595,7 +722,7 @@ if __name__ == '__main__':
     # Visualize counts of data types of the scans
     for feature in ['BitsAllocated', 'BitsStored', 'HighBit']:
         visualize_categorical_feature_distribution(
-            df=df_train_dicom_tags,
+            df=df_dicom_tags,
             feature=feature,
             title=f'{feature} Value Counts',
             path=settings.EDA / f'dicom_tags_{feature}_value_counts.png'
@@ -608,7 +735,7 @@ if __name__ == '__main__':
         'PhotometricInterpretation', 'PixelRepresentation', 'SamplesPerPixel'
     ]:
         visualize_categorical_feature_distribution(
-            df=df_train_dicom_tags,
+            df=df_dicom_tags,
             feature=feature,
             title=f'{feature} Value Counts',
             path=settings.EDA / f'dicom_tags_{feature}_value_counts.png'
@@ -619,7 +746,7 @@ if __name__ == '__main__':
         'PatientPosition'
     ]:
         visualize_categorical_feature_distribution(
-            df=df_train_dicom_tags,
+            df=df_dicom_tags,
             feature=feature,
             title=f'{feature} Value Counts',
             path=settings.EDA / f'dicom_tags_{feature}_value_counts.png'
@@ -660,7 +787,7 @@ if __name__ == '__main__':
     )
 
     # Create slices feature and merge it to image level labels
-    df_scan_slice_counts = df_train_dicom_tags.groupby('scan_id')['slices'].first().reset_index().rename(columns={'scan_id': 'series_id'})
+    df_scan_slice_counts = df_dicom_tags.groupby('scan_id')['slices'].first().reset_index().rename(columns={'scan_id': 'series_id'})
     df_scan_slice_counts['series_id'] = df_scan_slice_counts['series_id'].astype(np.int64)
     df_image_level_labels = df_image_level_labels.merge(df_scan_slice_counts, on='series_id', how='left')
     # Create instance number slices ratio feature and visualize it
