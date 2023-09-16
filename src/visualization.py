@@ -440,7 +440,7 @@ def visualize_image(image_or_dicom, mask=None, path=None):
     else:
         raise TypeError(f'Invalid image type {type(image_or_dicom)}')
 
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, ax = plt.subplots(figsize=(8, 8))
     ax.imshow(image, cmap='gray')
     if mask is not None:
         ax.imshow(mask, alpha=0.25)
@@ -499,14 +499,13 @@ def visualize_annotations(image_or_dicom, masks=None, bounding_boxes=None, label
 
     if bounding_boxes is not None and labels is not None:
         for bounding_box, label in zip(bounding_boxes, labels):
-            bounding_box = annotation_utilities.coco_to_voc_bounding_box(bounding_box)
             # Draw bounding box and its label to the image
             image = cv2.rectangle(image, (bounding_box[0], bounding_box[1]), (bounding_box[2], bounding_box[3]), (36, 255, 12), 2)
             (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
             image = cv2.rectangle(image, (bounding_box[0], bounding_box[1] - 20), (bounding_box[0] + w, bounding_box[1]), (36, 255, 12), -1)
             image = cv2.putText(image, label, (bounding_box[0], bounding_box[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
 
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, ax = plt.subplots(figsize=(8, 8))
     ax.imshow(image, cmap='gray')
 
     if masks is not None:
@@ -550,7 +549,7 @@ def visualize_images(images_or_dicoms, masks=None, path=None):
     else:
         raise TypeError(f'Invalid scan type {type(images_or_dicoms[0])}')
 
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, ax = plt.subplots(figsize=(8, 8))
     frames = []
     if masks is not None:
         for image, mask in zip(images, masks):
