@@ -30,17 +30,17 @@ if __name__ == '__main__':
     df_dicom_tags['image_path'] = df_dicom_tags['path'].apply(lambda x: str(train_directory) + '/' + x)
 
     patient_ids = [
-        43, 122, 26575, 26587
+        43, 122, 26575, 26587, 394, 851, 902, 2232
     ]
     scan_ids = [
-        24055, 8218, 2216, 29339
+        24055, 8218, 2216, 29339, 8611, 31895, 2180, 4213
     ]
 
     for patient_id, scan_id in zip(patient_ids, scan_ids):
 
         df_scan = df_dicom_tags.loc[(df_dicom_tags['patient_id'] == patient_id) & (df_dicom_tags['scan_id'] == scan_id)].reset_index(drop=True)
 
-        images = []
+        scan = []
 
         for dicom_file_path in tqdm(df_scan['image_path'].values):
             dicom = pydicom.dcmread(str(dicom_file_path))
@@ -53,12 +53,12 @@ if __name__ == '__main__':
                 photometric_interpretation='dataset', max_pixel_value=1
             )
             image = dicom_utilities.adjust_pixel_spacing(image=image, dicom=dicom, current_pixel_spacing='dataset', new_pixel_spacing=(1.0, 1.0))
-            images.append(image)
+            scan.append(image)
 
-        images = np.stack(images)
+        scan = np.stack(scan)
 
         visualization.visualize_scan(
-            images_or_dicoms=images,
+            images_or_dicoms=scan,
             masks=None,
             path=visualization_directory / f'{patient_id}_{scan_id}.mp4'
         )
