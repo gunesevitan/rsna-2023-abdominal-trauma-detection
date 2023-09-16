@@ -89,16 +89,18 @@ def coco_to_voc_bounding_box(bounding_box):
 
     Parameters
     ----------
-    bounding_box [list of shape (4)]: Bounding box with x1, y1, x2, y2 values
+    bounding_box: list of shape (4)
+        Bounding box with x1, y1, width, height values
 
     Returns
     -------
-    bounding_box [list of shape (4)]: Bounding box with x1, y1, width, height values
+    bounding_box: list of shape (4)
+        Bounding box with x1, y1, x2, y2 values
     """
 
     x1 = bounding_box[0]
     y1 = bounding_box[1]
     x2 = x1 + bounding_box[2]
-    y2 = bounding_box[1] + bounding_box[3]
+    y2 = y1 + bounding_box[3]
 
     return x1, y1, x2, y2
