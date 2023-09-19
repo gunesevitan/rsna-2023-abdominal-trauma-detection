@@ -39,7 +39,7 @@ def write_image(dicom_file_path, output_directory):
 
 if __name__ == '__main__':
 
-    dicom_root_directory = settings.DATA / 'rsna-2023-abdominal-trauma-detection' / 'train_images'
+    dicom_dataset_directory = settings.DATA / 'rsna-2023-abdominal-trauma-detection' / 'train_images'
     patient_ids = ['19', '26575', '394', '851', '2232', '2429', '2986', '3194']
 
     output_directory = settings.DATA / 'datasets' / '2d_soft_tissue_window_raw_size' / 'images'
@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     for patient in tqdm(patient_ids):
 
-        patient_directory = dicom_root_directory / patient
+        patient_directory = dicom_dataset_directory / patient
         patient_scans = sorted(os.listdir(patient_directory), key=lambda filename: int(filename))
 
         for scan in patient_scans:
