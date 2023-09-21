@@ -40,7 +40,10 @@ def write_image(dicom_file_path, output_directory):
 if __name__ == '__main__':
 
     dicom_dataset_directory = settings.DATA / 'rsna-2023-abdominal-trauma-detection' / 'train_images'
-    patient_ids = ['19', '26575', '394', '851', '2232', '2429', '2986', '3194']
+    patient_ids = [
+        '19', '26575', '394', '851', '2232', '2429', '2986', '3194', '65504', '65360',
+        '65149', '2384', '3414', '3785', '16731', '19384', '37022', '48508', '51038'
+    ]
 
     output_directory = settings.DATA / 'datasets' / '2d_soft_tissue_window_raw_size' / 'images'
     output_directory.mkdir(parents=True, exist_ok=True)
