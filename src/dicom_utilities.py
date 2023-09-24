@@ -232,11 +232,13 @@ def adjust_pixel_values(
     image = rescale_pixel_values(image=image, dicom=dicom, rescale_slope=rescale_slope, rescale_intercept=rescale_intercept)
 
     image = np.stack([
-        window_pixel_values(image=image, dicom=dicom, window_center=window_center, window_width=window_width)
+        window_pixel_values(image=np.copy(image), dicom=dicom, window_center=window_center, window_width=window_width)
         for window_center, window_width in zip(window_centers, window_widths)
     ], axis=-1)
 
-    image = (image - image.min()) / (image.max() - image.min())
+    image_min = image.min(axis=(0, 1))
+    image_max = image.max(axis=(0, 1))
+    image = (image - image_min) / (image_max - image_min + 1e-6)
     image = invert_pixel_values(image=image, dicom=dicom, photometric_interpretation=photometric_interpretation, max_pixel_value=max_pixel_value)
     image = (image * 255.0).astype(np.uint8)
 
