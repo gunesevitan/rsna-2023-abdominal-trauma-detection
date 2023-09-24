@@ -10,7 +10,7 @@ import settings
 import dicom_utilities
 
 
-def write_image(dicom_file_path, output_directory):
+def write_image(dicom_file_path, output_directory, pixel_spacing=None):
 
     """
     Read DICOM file and write it as a png file
@@ -22,6 +22,9 @@ def write_image(dicom_file_path, output_directory):
 
     output_directory: pathlib.Path
         Path of the directory image will be written to
+
+    pixel_spacing: tuple
+        Image pixel spacing after normalization
     """
 
     dicom = pydicom.dcmread(str(dicom_file_path))
@@ -33,6 +36,14 @@ def write_image(dicom_file_path, output_directory):
         window_centers=['dataset'], window_widths=['dataset'],
         photometric_interpretation='dataset', max_pixel_value=1
     )
+
+    if pixel_spacing is not None:
+        image = dicom_utilities.adjust_pixel_spacing(
+            image=image,
+            dicom=dicom,
+            current_pixel_spacing='dataset',
+            new_pixel_spacing=pixel_spacing
+        )
 
     cv2.imwrite(str(output_directory / f'{dicom_file_path.split("/")[-1].split(".")[0]}.png'), image)
 
@@ -61,7 +72,8 @@ if __name__ == '__main__':
             Parallel(n_jobs=16)(
                 delayed(write_image)(
                     dicom_file_path=str(scan_directory / file_name),
-                    output_directory=scan_output_directory
+                    output_directory=scan_output_directory,
+                    pixel_spacing=None
                 )
                 for file_name in file_names
             )
