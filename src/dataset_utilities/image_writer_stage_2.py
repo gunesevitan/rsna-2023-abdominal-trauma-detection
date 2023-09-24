@@ -2,7 +2,6 @@ import sys
 import os
 from joblib import Parallel, delayed
 from tqdm import tqdm
-import numpy as np
 import cv2
 import pydicom
 
