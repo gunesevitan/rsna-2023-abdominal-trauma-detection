@@ -136,8 +136,7 @@ def window_pixel_values(image, dicom, window_center=None, window_width=None):
     if window_center is not None and window_width is not None:
         image_min = window_center - window_width // 2
         image_max = window_center + window_width // 2
-        image[image < image_min] = image_min
-        image[image > image_max] = image_max
+        image = np.clip(image.copy(), image_min, image_max)
 
     return image
 
