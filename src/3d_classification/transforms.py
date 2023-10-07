@@ -1,7 +1,5 @@
-import cv2
 import monai.transforms as T
 import torch
-from albumentations.pytorch.transforms import ToTensorV2
 
 
 def get_classification_transforms(**transform_parameters):
