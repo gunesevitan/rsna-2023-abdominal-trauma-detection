@@ -282,3 +282,45 @@ def adjust_pixel_spacing(image, dicom, current_pixel_spacing=None, new_pixel_spa
         image = cv2.resize(image, dsize=None, fx=resize_factor[1], fy=resize_factor[0], interpolation=cv2.INTER_NEAREST)
 
     return image
+
+
+def get_largest_contour(image):
+
+    """
+    Get the largest contour from the image
+
+    Parameters
+    ----------
+    image: numpy.ndarray of shape (height, width)
+        Image array
+
+    Returns
+    -------
+    bounding_box: list of shape (4)
+        Bounding box with x1, y1, x2, y2 values
+    """
+
+    thresholded_image = cv2.threshold(image, 20, 255, cv2.THRESH_BINARY)[1]
+    contours, _ = cv2.findContours(thresholded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    if len(contours) == 0:
+        x1 = 0
+        x2 = image.shape[1] + 1
+        y1 = 0
+        y2 = image.shape[0] + 1
+    else:
+        contour = max(contours, key=cv2.contourArea)
+        mask = np.zeros(image.shape, np.uint8)
+        cv2.drawContours(mask, [contour], -1, 255, cv2.FILLED)
+
+        y1, y2 = np.min(contour[:, :, 1]), np.max(contour[:, :, 1])
+        x1, x2 = np.min(contour[:, :, 0]), np.max(contour[:, :, 0])
+
+        x1 = int(0.99 * x1)
+        x2 = int(1.01 * x2)
+        y1 = int(0.99 * y1)
+        y2 = int(1.01 * y2)
+
+    bounding_box = [x1, y1, x2, y2]
+
+    return bounding_box
