@@ -10,6 +10,7 @@ from monai.transforms import Resize
 
 sys.path.append('..')
 import settings
+import dicom_utilities
 
 
 if __name__ == '__main__':
@@ -18,7 +19,7 @@ if __name__ == '__main__':
     image_dataset_directory = settings.DATA / 'datasets' / '2d_1w_raw_size' / 'images'
     patient_ids = sorted(os.listdir(image_dataset_directory), key=lambda filename: int(filename))
 
-    output_directory = settings.DATA / 'datasets' / '3d_1w_cropped_96x256x256' / 'volumes'
+    output_directory = settings.DATA / 'datasets' / '3d_1w_contour_cropped_96x256x256' / 'volumes'
     output_directory.mkdir(parents=True, exist_ok=True)
 
     resize = Resize(spatial_size=(96, 256, 256))
@@ -78,6 +79,20 @@ if __name__ == '__main__':
                 slices_with_all_zero_vertical_lines = np.append(slices_with_all_zero_vertical_lines, slices_with_all_zero_vertical_lines[-1])
                 scan = scan[~slices_with_all_zero_vertical_lines]
                 del scan_all_zero_vertical_line_transitions, slices_with_all_zero_vertical_lines
+
+            # Crop the largest contour
+            largest_contour_bounding_boxes = np.array([dicom_utilities.get_largest_contour(image) for image in scan])
+            largest_contour_bounding_box = [
+                int(largest_contour_bounding_boxes[:, 0].min()),
+                int(largest_contour_bounding_boxes[:, 1].min()),
+                int(largest_contour_bounding_boxes[:, 2].max()),
+                int(largest_contour_bounding_boxes[:, 3].max()),
+            ]
+            scan = scan[
+                :,
+                largest_contour_bounding_box[1]:largest_contour_bounding_box[3] + 1,
+                largest_contour_bounding_box[0]:largest_contour_bounding_box[2] + 1,
+            ]
 
             # Crop non-zero slices along xz, yz and xy planes
             mmin = np.array((scan > 0).nonzero()).min(axis=1)
