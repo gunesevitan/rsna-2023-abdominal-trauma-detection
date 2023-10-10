@@ -1,6 +1,6 @@
 from torch.nn import *
 
 from monai_models import MONAIConvolutionalClassificationModel, MONAITransformerClassificationModel
-from sequence_models import MILClassificationModel, RNNClassificationModel
+from sequence_models import MILClassificationModel, RNNClassificationModel, CNNClassificationModel
 from resnet3d_csn import ResNet3DCSNModel
 from torch_loss_functions import SampleWeightedBCEWithLogitsLoss, SampleWeightedBCELoss, SampleWeightedCrossEntropyLoss
