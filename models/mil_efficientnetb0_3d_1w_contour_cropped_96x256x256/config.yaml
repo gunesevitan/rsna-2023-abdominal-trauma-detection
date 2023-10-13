@@ -1,0 +1,80 @@
+dataset:
+  dataset_name: 3d_1w_contour_cropped_96x256x256
+
+model:
+  model_class: 'MILClassificationModel'
+  model_args:
+    model_name: 'efficientnet_b0'
+    pretrained: True
+    backbone_args:
+      in_chans: 1
+      drop_rate: 0.1
+      drop_path_rate: 0.1
+    mil_pooling_type: 'avg'
+    feature_pooling_type: 'attention'
+    dropout_rate: 0.0
+    freeze_parameters: False
+  model_checkpoint_path: null
+
+training:
+  folds: ['fold1', 'fold2', 'fold3', 'fold4', 'fold5']
+  bowel_loss_function: 'SampleWeightedBCEWithLogitsLoss'
+  bowel_loss_function_args: {}
+  extravasation_loss_function: 'SampleWeightedBCEWithLogitsLoss'
+  extravasation_loss_function_args: {}
+  kidney_loss_function: 'SampleWeightedCrossEntropyLoss'
+  kidney_loss_function_args: {}
+  liver_loss_function: 'SampleWeightedCrossEntropyLoss'
+  liver_loss_function_args: {}
+  spleen_loss_function: 'SampleWeightedCrossEntropyLoss'
+  spleen_loss_function_args: {}
+  training_batch_size: 4
+  test_batch_size: 8
+  num_workers: 16
+  random_state: 42
+  deterministic_cudnn: False
+  device: 'cuda'
+  optimizer: 'AdamW'
+  optimizer_args:
+    lr: 0.00025
+    betas: [0.9, 0.999]
+    weight_decay: 0.00001
+  lr_scheduler: 'CosineAnnealingLR'
+  lr_scheduler_args:
+    T_max: 2500
+    eta_min: 0.000025
+    last_epoch: -1
+    verbose: False
+  amp: True
+  epochs: 15
+  early_stopping_patience: 999
+
+test:
+  folds: [fold1, fold2, fold3, fold4, fold5]
+  model_file_names: ['model_fold1_best.pt', 'model_fold2_best.pt', 'model_fold3_best.pt', 'model_fold4_best.pt', 'model_fold5_best.pt']
+  tta: True
+  tta_flip_dimensions: [[2, 3, 4]]
+
+transforms:
+  random_z_flip_probability: 0.5
+  random_x_flip_probability: 0.5
+  random_y_flip_probability: 0.5
+  random_axial_rotate_90_probability: 0.25
+  random_rotate_range_x: 0.0
+  random_rotate_range_y: 0.0
+  random_rotate_range_z: 0.45
+  random_rotate_probability: 0.1
+  random_histogram_shift_num_control_points: 25
+  random_histogram_shift_probability: 0.05
+  random_contrast_gamma: [0.5, 2.5]
+  random_contrast_probability: 0.05
+  crop_roi_size: [-1, 224, 224]
+  cutout_holes: 8
+  cutout_spatial_size: [4, 8, 8]
+  cutout_max_holes: 16
+  max_spatial_size: [8, 16, 16]
+  cutout_probability: 0.1
+
+persistence:
+  model_directory: 'mil_efficientnetb0_3d_1w_contour_cropped_96x256x256'
+  save_epoch_model: []

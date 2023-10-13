@@ -1,0 +1,8 @@
+train: /home/gunes/Desktop/Kaggle/rsna-2023-abdominal-trauma-detection/data/datasets/yolo_roi_detection/train
+val: /home/gunes/Desktop/Kaggle/rsna-2023-abdominal-trauma-detection/data/datasets/yolo_roi_detection/valid
+
+nc: 3
+names:
+  0: abdominal
+  1: upper
+  2: lower
