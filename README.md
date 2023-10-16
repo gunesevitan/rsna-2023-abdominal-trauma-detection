@@ -1,3 +1,5 @@
+# RSNA 2023 Abdominal Trauma Detection
+
 ## Overview
 
 I used an efficient preprocessing pipeline and small multi-task models in a single stage framework. I didn't use image level labels and segmentation masks because I forgot they were given 🤦‍♂️.
